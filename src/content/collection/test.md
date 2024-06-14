@@ -1,6 +1,7 @@
 ---
 title: TItLE
 description: test
+show: true
 ---
 
 # markdown
