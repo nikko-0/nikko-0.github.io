@@ -105,38 +105,28 @@ const Collection = ({ collection }) => {
         ?.map((entry, key) => (
           <div key={key} className="flex flex-col">
             <Link
-              className="text-[1em] text-pretty cursor-none underline underline-offset-[0.3em] hover:no-underline transition-all px-1.5 py-0.5 mb-0.5"
-              href={`/${entry?.slug}`}
+              className="text-[1em] text-pretty cursor-none underline underline-offset-[0.3em] hover:no-underline transition-all px-1 py-0.5 mb-0.5"
+              href={`/collection/${entry?.slug}`}
             >
               {entry?.data?.title ? entry?.data?.title : entry?.slug}
             </Link>
-            {entry?.data?.tag && (
-              <div className="flex flex-wrap px-1.5">
-                {entry?.data?.tag?.map((tag, key) => (
-                  <div key={key} className="text-[0.7em]">
-                    {tag}&nbsp;&nbsp;&nbsp;
-                  </div>
-                ))}
-              </div>
-            )}
             {entry?.data?.description && (
-              <div className="text-[0.9em] opacity-50 px-1.5">
+              <div className="text-sm opacity-50 px-1">
                 {entry?.data?.description}
               </div>
             )}
-            {(entry?.data?.author || entry?.data?.date) && (
-              <div className="flex flex-wrap opacity-50 px-1.5 items-baseline">
+            {(entry?.data?.tag || entry?.data?.author || entry?.data?.date) && (
+              <div className="flex flex-wrap px-1 items-baseline text-[0.7em]">
                 {entry?.data?.date && (
-                  <time className="text-[0.7em]">
-                    {new Date(entry?.data?.date).toLocaleDateString('en-GB')}
-                    &nbsp;&nbsp;&nbsp;
-                  </time>
+                  <time>{'|'}&nbsp;{new Date(entry?.data?.date).toLocaleDateString('en-GB')}&nbsp;{'|'}&nbsp;&nbsp;&nbsp;</time>
                 )}
+                {entry?.data?.tag &&
+                  entry?.data?.tag?.map((tag, key) => (
+                    <div key={key}>{'['}&nbsp;{tag}&nbsp;{']'}&nbsp;&nbsp;&nbsp;</div>
+                  ))}
                 {entry?.data?.author &&
                   entry?.data?.author?.map((author, key) => (
-                    <span key={key} className="italic text-[0.85em]">
-                      {author}&nbsp;&nbsp;&nbsp;
-                    </span>
+                    <div key={key} className="italic">{author}&nbsp;&nbsp;&nbsp;</div>
                   ))}
               </div>
             )}
@@ -162,11 +152,27 @@ export default function Page({
   children,
 }) {
   const ref = useRef(null);
+  const footer = useRef(null);
   const { scrollYProgress } = useScroll({ target: ref });
+  const scrollFooter = useScroll({
+    target: footer,
+    offset: ['end end', 'start end'],
+  });
   return (
     <>
       {backgroundImage && <Background image={backgroundImage} />}
-      <header>
+      <motion.header
+        style={{
+          opacity: useTransform(
+            scrollFooter.scrollYProgress,
+            [0.3, 0],
+            [1, 0],
+            {
+              ease: easeInOut,
+            }
+          ),
+        }}
+      >
         <motion.section
           style={{
             scale: useTransform(scrollYProgress, [0, 1], [1, 0.5], {
@@ -270,7 +276,7 @@ export default function Page({
           </section>
         </motion.section>
         <section className="h-[257.25vh] -z-50" />
-      </header>
+      </motion.header>
       <main className="px-[5cqmin]">
         <section className="mx-auto w-[clamp(50%+5cqmin,700px,100%)] text-[1.5rem] leading-relaxed text-pretty">
           <article>{children}</article>
@@ -280,7 +286,7 @@ export default function Page({
         <section className="min-[1000px]:hidden flex flex-col-reverse">
           <section className="px-[5cqmin] py-[max(5cqmin,64px)] bg-white text-black">
             <div className="flex flex-col gap-3 text-base">
-              <div className="ml-1 mb-3.5 text-[2em]">Collection</div>
+              <Link href="/collection" className="text-[1.5em] cursor-none underline underline-offset-[0.3em] hover:no-underline transition-all inline-block whitespace-pre px-1 pb-2 pt-1">collection</Link>
               <Collection collection={collection} />
             </div>
           </section>
@@ -290,20 +296,20 @@ export default function Page({
         <section className="min-[700px]:hidden flex flex-col-reverse">
           <section className="px-[5cqmin] py-[max(5cqmin,64px)] bg-white text-black">
             <div className="flex flex-col gap-3 text-base">
-              <div className="ml-1 mb-3.5 text-[2em]">Repositories</div>
+              <Link href={`${data?.user?.url}?tab=repositories`} className="text-[1.5em] cursor-none underline underline-offset-[0.3em] hover:no-underline transition-all inline-block whitespace-pre px-1 pb-2 pt-1">repositories</Link>
               <GithubRepositories data={data} />
             </div>
           </section>
         </section>
       )}
-      <footer>
+      <footer ref={footer}>
         <section className="text-black bg-white">
           <section className="relative h-screen w-screen [clip-path:polygon(0%_0%,100%_0%,100%_100%,0%_100%)]">
             <section className="fixed h-screen w-screen inset-0">
-              <section className="size-full p-[5cqmin] pt-[15vh] flex flex-col gap-[3cqmin] text-base">
-                <section className="flex size-full px-1.5 gap-[5cqmin]">
+              <section className="size-full p-[5cqmin] flex flex-col gap-[3cqmin] text-base">
+                <section className="flex size-full gap-[5cqmin]">
                   <section className="flex flex-col justify-end gap-[1em]">
-                    <div className="flex items-baseline">
+                    <div className="flex flex-wrap items-baseline px-1.5">
                       {data?.user?.name && (
                         <div className="font-['Melodrama'] text-5xl">
                           {data?.user?.name}
@@ -324,7 +330,9 @@ export default function Page({
                         </div>
                       )}
                       {data?.user?.status?.message && (
-                        <div>&nbsp;·&nbsp;{data?.user?.status?.message}</div>
+                        <div className="flex">
+                          &nbsp;·&nbsp;<div>{data?.user?.status?.message}</div>
+                        </div>
                       )}
                       {data?.user?.pronouns && (
                         <div className="opacity-30">
@@ -332,11 +340,13 @@ export default function Page({
                         </div>
                       )}
                     </div>
-                    {data?.user?.bio && <div>{data?.user?.bio}</div>}
+                    {data?.user?.bio && (
+                      <div className="px-1.5">{data?.user?.bio}</div>
+                    )}
                     {(data?.user?.location ||
                       data?.user?.company ||
                       data?.user?.isHireable) && (
-                      <div className="flex gap-[1em]">
+                      <div className="flex gap-[1em] px-1.5">
                         {data?.user?.location && (
                           <div>{data?.user?.location}</div>
                         )}
@@ -344,56 +354,56 @@ export default function Page({
                           <div>{data?.user?.company}</div>
                         )}
                         {data?.user?.isHireable && (
-                          <div>AVAILABLE FOR HIRE</div>
+                          <div>AVAILABLE&nbsp;FOR&nbsp;HIRE</div>
                         )}
                       </div>
                     )}
+                    {(data?.user?.email ||
+                      data?.user?.websiteUrl ||
+                      data?.user?.socialAccounts?.edges?.length !== 0) && (
+                      <section className="flex flex-col flex-wrap justify-start gap-[1em] uppercase text-xs">
+                        {data?.user?.email && (
+                          <Link
+                            href={`mailto:${data?.user?.email}`}
+                            className="cursor-none underline underline-offset-[0.3em] hover:no-underline transition-all inline-block whitespace-pre px-1.5 py-1"
+                          >
+                            {data?.user?.email}
+                          </Link>
+                        )}
+                        {data?.user?.websiteUrl && (
+                          <Link
+                            href={data?.user?.websiteUrl}
+                            className="cursor-none underline underline-offset-[0.3em] hover:no-underline transition-all inline-block whitespace-pre px-1.5 py-1"
+                          >
+                            {(data?.user?.websiteUrl).split('/')[2]}
+                          </Link>
+                        )}
+                        {data?.user?.socialAccounts?.edges?.map((edge, key) => (
+                          <Link
+                            key={key}
+                            href={edge?.node?.url}
+                            className="cursor-none underline underline-offset-[0.3em] hover:no-underline transition-all inline-block whitespace-pre px-1.5 py-1"
+                          >
+                            {(edge?.node?.url).split('/')[2]}
+                          </Link>
+                        ))}
+                      </section>
+                    )}
                   </section>
                   {data?.user?.pinnedItems?.edges?.length !== 0 && (
-                    <section className="max-[699px]:hidden flex flex-col justify-end gap-[1em]">
-                      <div className="ml-1 mb-3.5 text-[2em]">Repositories</div>
+                    <section className="max-[699px]:hidden flex flex-col overflow-hidden justify-start gap-[1em]">
+                      <Link href={`${data?.user?.url}?tab=repositories`} className="text-[1.5em] cursor-none underline underline-offset-[0.3em] hover:no-underline transition-all inline-block whitespace-pre px-1 pb-2 pt-1">repositories</Link>
                       <GithubRepositories data={data} />
                     </section>
                   )}
                   {collection?.filter((entry) => entry?.data?.show)?.length !==
                     0 && (
-                    <section className="max-[999px]:hidden flex flex-col justify-end gap-[1em]">
-                      <div className="ml-1 mb-3.5 text-[2em]">Collection</div>
+                    <section className="max-[999px]:hidden flex flex-col overflow-hidden justify-start gap-[1em]">
+                      <Link href="/collection" className="text-[1.5em] cursor-none underline underline-offset-[0.3em] hover:no-underline transition-all inline-block whitespace-pre px-1 pb-2 pt-1">collection</Link>
                       <Collection collection={collection} />
                     </section>
                   )}
                 </section>
-                {(data?.user?.email ||
-                  data?.user?.websiteUrl ||
-                  data?.user?.socialAccounts?.edges?.length !== 0) && (
-                  <section className="flex flex-wrap justify-start gap-[1em] uppercase text-xs">
-                    {data?.user?.email && (
-                      <Link
-                        href={`mailto:${data?.user?.email}`}
-                        className="cursor-none underline underline-offset-[0.3em] hover:no-underline transition-all inline-block whitespace-pre px-1.5 py-1"
-                      >
-                        {data?.user?.email}
-                      </Link>
-                    )}
-                    {data?.user?.websiteUrl && (
-                      <Link
-                        href={data?.user?.websiteUrl}
-                        className="cursor-none underline underline-offset-[0.3em] hover:no-underline transition-all inline-block whitespace-pre px-1.5 py-1"
-                      >
-                        {(data?.user?.websiteUrl).split('/')[2]}
-                      </Link>
-                    )}
-                    {data?.user?.socialAccounts?.edges?.map((edge, key) => (
-                      <Link
-                        key={key}
-                        href={edge?.node?.url}
-                        className="cursor-none underline underline-offset-[0.3em] hover:no-underline transition-all inline-block whitespace-pre px-1.5 py-1"
-                      >
-                        {(edge?.node?.url).split('/')[2]}
-                      </Link>
-                    ))}
-                  </section>
-                )}
               </section>
             </section>
           </section>
